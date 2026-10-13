@@ -1,0 +1,120 @@
+# Publishes a GitHub release whenever the "version" in mod/modinfo.json changes on main.
+#
+# How it decides: if tag v<version> does not exist yet, build the mod, create the tag on
+# the pushed commit, and attach the mod zip to a new release. If the tag already exists
+# (modinfo.json changed but the version did not), it does nothing.
+#
+# The game is not in the repo, so CI compiles against the official Vintage Story server
+# package (same DLLs as the client), downloaded from the game's CDN and cached.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - mod/modinfo.json
+  # Manual re-run, e.g. if a release failed halfway. Still skips if the tag exists.
+  workflow_dispatch:
+
+permissions:
+  contents: write # create tags and releases
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  # Game version to compile against. Bump this when you move to a new game version.
+  VS_VERSION: "1.22.7"
+  VINTAGE_STORY: ${{ github.workspace }}/.vintagestory
+
+jobs:
+  release:
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version and check for an existing tag
+        id: version
+        run: |
+          set -euo pipefail
+          version="$(jq -r '.version' mod/modinfo.json)"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error file=mod/modinfo.json::version '$version' is not of the form 1.2.3 or 1.2.3-rc.1"
+            exit 1
+          fi
+          tag="v$version"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "::notice::Tag $tag already exists; nothing to release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Refuse to release a version lower than the newest existing release tag.
+          # Compares only X.Y.Z: sort -V ranks 1.0.0-rc.1 above 1.0.0, which would block
+          # the final release after a release candidate.
+          latest="$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/v||' | sort -V | tail -n1)"
+          core="${version%%-*}"
+          latest_core="${latest%%-*}"
+          if [ -n "$latest" ] && [ "$core" != "$latest_core" ] \
+             && [ "$(printf '%s\n%s\n' "$latest_core" "$core" | sort -V | tail -n1)" != "$core" ]; then
+            echo "::error file=mod/modinfo.json::version $version is lower than the latest release v$latest"
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "Releasing $tag (previous: ${latest:+v}${latest:-none})"
+
+      - name: Set up .NET
+        if: steps.version.outputs.release == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x" # 1.22 uses .NET 10; keep in step with mod/IronPit.csproj
+
+      - name: Cache Vintage Story server
+        if: steps.version.outputs.release == 'true'
+        id: vs-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VINTAGE_STORY }}
+          key: vintagestory-server-${{ env.VS_VERSION }}
+
+      - name: Download Vintage Story server
+        if: steps.version.outputs.release == 'true' && steps.vs-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$VINTAGE_STORY"
+          curl -sSfL "https://cdn.vintagestory.at/gamefiles/stable/vs_server_linux-x64_${VS_VERSION}.tar.gz" \
+            | tar xz -C "$VINTAGE_STORY"
+          test -f "$VINTAGE_STORY/VintagestoryAPI.dll"
+
+      - name: Build and package
+        if: steps.version.outputs.release == 'true'
+        run: |
+          set -euo pipefail
+          bash scripts/package.sh
+          test -f "dist/ironpit-${{ steps.version.outputs.version }}.zip"
+
+      - name: Create tag and release
+        if: steps.version.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          prerelease=()
+          if [[ "$VERSION" == *-* ]]; then prerelease=(--prerelease); fi
+          # gh creates the tag on the pushed commit, since it does not exist yet.
+          gh release create "$TAG" "dist/ironpit-$VERSION.zip" \
+            --target "$GITHUB_SHA" \
+            --title "Iron Pit $VERSION" \
+            --notes "Built against Vintage Story $VS_VERSION." \
+            --generate-notes \
+            "${prerelease[@]}"
