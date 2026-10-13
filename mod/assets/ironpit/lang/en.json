@@ -1,0 +1,7 @@
+{
+  "ironpit:pig-iron": "Pig iron",
+  "ironpit:slag": "Slag",
+  "ironpit:bellows-air": "Bellows air: {0}%",
+  "ironpit:crucible-iron-output": "Will create {0} units of Iron ({1}% recovery). Melts at {2}°C",
+  "ironpit:crucible-ferrous-blocked": "Finished iron and steel cannot be remelted in a crucible"
+}

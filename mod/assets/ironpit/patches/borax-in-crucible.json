@@ -1,0 +1,14 @@
+[
+  {
+    "op": "add",
+    "path": "/storageFlagsByType",
+    "value": { "*-borax": 5 },
+    "file": "game:itemtypes/resource/crushed/powder.json"
+  },
+  {
+    "op": "add",
+    "path": "/sizeByType",
+    "value": { "*-borax": { "width": 0.0625, "height": 0.0625, "length": 0.0625 } },
+    "file": "game:itemtypes/resource/crushed/powder.json"
+  }
+]

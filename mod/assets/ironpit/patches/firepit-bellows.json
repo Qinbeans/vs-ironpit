@@ -1,0 +1,8 @@
+[
+  {
+    "op": "add",
+    "path": "/entityBehaviors/-",
+    "value": { "name": "IronPitFirepitBellows" },
+    "file": "game:blocktypes/wood/firepit.json"
+  }
+]

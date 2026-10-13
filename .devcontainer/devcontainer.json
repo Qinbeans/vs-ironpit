@@ -1,0 +1,37 @@
+{
+  "name": "Vintage Story Mod (IronPit)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "10.0"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  // The host resolves this symlink before Docker starts. VINTAGE_STORY takes
+  // precedence; Linux Flatpak installs are detected automatically.
+  "mounts": [
+    "source=${localWorkspaceFolder}/.devcontainer/.vintagestory,target=/vintagestory,type=bind,readonly"
+  ],
+  "containerEnv": {
+    "VINTAGE_STORY": "/vintagestory",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+  },
+  "initializeCommand": "set -eu; game_dir=\"${localEnv:VINTAGE_STORY}\"; if [ -z \"$game_dir\" ]; then flatpak_location=\"$(flatpak info --show-location at.vintagestory.VintageStory 2>/dev/null || true)\"; game_dir=\"$flatpak_location/files/extra/vintagestory\"; fi; test -f \"$game_dir/VintagestoryAPI.dll\" || { echo 'Could not find VintagestoryAPI.dll. Set VINTAGE_STORY to the game directory, or install the at.vintagestory.VintageStory Flatpak.' >&2; exit 1; }; ln -sfn \"$game_dir\" \"${localWorkspaceFolder}/.devcontainer/.vintagestory\"",
+  "postCreateCommand": "bash scripts/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "editorconfig.editorconfig",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "files.exclude": {
+          "**/bin": true,
+          "**/obj": true
+        },
+        "editor.formatOnSave": true
+      }
+    }
+  }
+}

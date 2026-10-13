@@ -1,0 +1,8 @@
+bin/
+obj/
+*.zip
+.vs/
+.idea/
+.devcontainer/.vintagestory
+dist/
+.claude
