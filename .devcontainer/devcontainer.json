@@ -10,7 +10,8 @@
   // The host resolves this symlink before Docker starts. VINTAGE_STORY takes
   // precedence; Linux Flatpak installs are detected automatically.
   "mounts": [
-    "source=${localWorkspaceFolder}/.devcontainer/.vintagestory,target=/vintagestory,type=bind,readonly"
+    "source=${localWorkspaceFolder}/.devcontainer/.vintagestory,target=/vintagestory,type=bind,readonly",
+    "type=tmpfs,target=/tmp,tmpfs-mode=1777"
   ],
   "containerEnv": {
     "VINTAGE_STORY": "/vintagestory",
