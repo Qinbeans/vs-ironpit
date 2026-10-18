@@ -59,11 +59,16 @@ namespace IronPit
 
         // Bellows make the fire pit hot enough to remelt finished iron, steel and meteoric
         // iron in a crucible, which vanilla never allows (and molten iron casts in tool molds).
-        // While true, crucibles refuse those. Iron ore nuggets still refine as above.
+        // While true, crucibles refuse those except AllowFerrousRemeltItemCodes. Iron ore
+        // nuggets still refine as above.
         public bool BlockFerrousRemelt = true;
 
         // Metals (the "metal" variant of the smelted output, e.g. ingot-steel) blocked by BlockFerrousRemelt.
         public string[] FerrousMetals = new[] { "iron", "meteoriciron", "steel" };
+
+        // Finished ferrous items that may still melt in the crucible. Meteoritic iron is
+        // useful as a cast metal, while iron bits are reclaimable smithing scrap.
+        public string[] AllowFerrousRemeltItemCodes = new[] { "game:ingot-meteoriciron", "game:metalbit-meteoriciron", "game:metalbit-iron" };
     }
 
     public class RecoveryTier

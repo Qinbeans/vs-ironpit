@@ -13,7 +13,8 @@ namespace IronPit
     // For an "iron charge" (iron ore nuggets, optionally with borax) we answer those
     // ourselves: melt at the refine threshold and produce molten iron ingots with the
     // borax recovery applied. Everything else falls through to vanilla, except
-    // remelting finished ferrous metal, which we block (see IronPitConfig.BlockFerrousRemelt).
+    // remelting finished ferrous metal that is not specifically allowed (see
+    // IronPitConfig.BlockFerrousRemelt).
     //
     // GetOutputText (the "Will create N units" line) is not virtual; CrucibleOutputTextPatch handles it.
     public class BlockIronPitCrucible : BlockSmeltingContainer
@@ -160,12 +161,19 @@ namespace IronPit
             if (!Config.BlockFerrousRemelt) return false;
 
             ItemStack[] ingredients = GetIngredients(world, cookingSlotsProvider);
+            if (ingredients.Length > 0 && ingredients.All(IsAllowedFerrousRemeltIngredient)) return false;
+
             ItemStack? output = GetMatchingAlloy(world, ingredients)?.Output?.ResolvedItemstack
                 ?? GetSingleSmeltableStack(ingredients)?.output;
             if (output == null) return false;
 
             string? metal = output.Collectible.Variant?["metal"];
             return metal != null && Config.FerrousMetals.Contains(metal);
+        }
+
+        static bool IsAllowedFerrousRemeltIngredient(ItemStack stack)
+        {
+            return Config.AllowFerrousRemeltItemCodes.Any(code => stack.Collectible.Code.Equals(new AssetLocation(code)));
         }
 
         static bool IsFlux(ItemStack stack)

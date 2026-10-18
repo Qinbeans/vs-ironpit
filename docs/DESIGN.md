@@ -97,7 +97,7 @@ Cap at 100% so the crucible never beats the bloomery's 1 bloom per 20 nuggets. W
 
 ### Side effect of bellows: ferrous remelting
 
-At 1550°C+ a vanilla crucible could remelt finished iron (ingots, bits, plates…), steel (1502) and meteoric iron (1476), then cast them in tool molds, which vanilla never allows. `BlockFerrousRemelt` (default true) refuses those charges. **Open question:** should refined iron from ore be castable in tool molds, or only ingot molds?
+At 1550°C+ a vanilla crucible could remelt finished iron (ingots, bits, plates…), steel (1502) and meteoric iron (1476), then cast them in tool molds, which vanilla never allows. `BlockFerrousRemelt` (default true) refuses those charges, except `ingot-meteoriciron`, `metalbit-meteoriciron`, and `metalbit-iron`. This allows meteoric iron melting and reclamation of iron bits while keeping finished iron ingots, plates and steel blocked. Pig iron remains unimplemented. **Open question:** should refined iron from ore be castable in tool molds, or only ingot molds?
 
 ## 7. Outputs
 
