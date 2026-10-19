@@ -4,7 +4,7 @@
   "name": "Iron Pit",
   "authors": ["you"],
   "description": "Smelt iron in a bellows-driven fire pit with a crucible. Pig iron at base heat, refined iron when held hot, borax as a flux.",
-    "version": "0.2.2",
+    "version": "0.2.3",
   "dependencies": {
     "game": "1.22.0"
   }

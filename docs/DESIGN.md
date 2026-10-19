@@ -85,11 +85,13 @@ Cap at 100% so the crucible never beats the bloomery's 1 bloom per 20 nuggets. W
 ### Implemented (v0.1, untested in game)
 
 - `patches/borax-in-crucible.json` gives `powder-borax` the Metallurgy storage flag and a nugget-sized size, so it fits crucible slots.
-- `BlockIronPitCrucible` replaces the fired crucible's class (`patches/crucible-class.json`). A crucible holding only iron ore nuggets (anything vanilla would smelt to `ironbloom`), plus optional borax, is an **iron charge**:
+- `BlockIronPitCrucible` replaces the fired crucible's class (`patches/crucible-class.json`). A crucible holding only one kind of iron source, plus optional borax, is an **iron charge**. Iron sources are iron ore nuggets (anything vanilla would smelt to `ironbloom`) and meteorite stone (`IronChargeOwnMetalSmeltsTo`: anything vanilla would smelt to `ingot-meteoriciron`). Iron ore and meteorite in the same crucible are not a charge.
   - melts at `RefineThreshold` (1500), or `RefineThresholdWithBorax` (1400) when borax per nugget ≥ `BoraxDiscountMinRatio` (0.1, the 10:1 tier, so a pinch of borax doesn't unlock it)
-  - becomes molten `ingot-iron`, units = floor(5 × nuggets × recovery); recovery tiers are in config
+  - "per nugget" means per nugget's worth of metal (5 units). A meteorite stone is 50 units (2 stones → 1 ingot), so it counts as 10 nuggets: 64 stones + 64 borax is the 10:1 tier
+  - iron ore becomes molten `ingot-iron`; meteorite stays `ingot-meteoriciron`. Units = floor(vanilla units × recovery); recovery tiers are in config
+  - meteorite follows the iron thresholds rather than its vanilla 1476 melting point, so without borax it needs 1500
   - borax is consumed with the ore
-- The fire pit window shows "Will create N units of Iron (R% recovery). Melts at T°C" (Harmony patch, because vanilla's method is not virtual).
+- The fire pit window shows "Will create N units of <metal> (R% recovery). Melts at T°C" (Harmony patch, because vanilla's method is not virtual).
 - Held heat matters already: vanilla drains cooking progress quickly whenever the charge dips below its melting point, so letting the bellows lapse costs progress. The real 2/3 rule is still milestone 4.
 - **Borax "at the start" is not enforced.** Slots stay editable mid-burn. Adding cold borax drops the whole charge to the borax's temperature (vanilla takes the minimum across stacks), which is a natural penalty.
 - **Per-batch trade-off:** borax takes a crucible slot, so a full no-borax crucible (512 nuggets → 2048 units) gives more metal per batch than 5:1 (320 nuggets + 64 borax → 1600 units). Borax wins per nugget, which is the scarce input.
@@ -97,7 +99,7 @@ Cap at 100% so the crucible never beats the bloomery's 1 bloom per 20 nuggets. W
 
 ### Side effect of bellows: ferrous remelting
 
-At 1550°C+ a vanilla crucible could remelt finished iron (ingots, bits, plates…), steel (1502) and meteoric iron (1476), then cast them in tool molds, which vanilla never allows. `BlockFerrousRemelt` (default true) refuses those charges, except `ingot-meteoriciron`, `metalbit-meteoriciron`, and `metalbit-iron`. This allows meteoric iron melting and reclamation of iron bits while keeping finished iron ingots, plates and steel blocked. Pig iron remains unimplemented. **Open question:** should refined iron from ore be castable in tool molds, or only ingot molds?
+At 1550°C+ a vanilla crucible could remelt finished iron (ingots, bits, plates…), steel (1502) and meteoric iron (1476), then cast them in tool molds, which vanilla never allows. `BlockFerrousRemelt` (default true) refuses those charges, except `stone-meteorite-iron`, `ingot-meteoriciron`, `metalbit-meteoriciron`, and `metalbit-iron`. Vanilla meteorite stone has no `size`, so it gets the 0.5 default and does not fit the crucible's `maxContentDimensions` (0.125 × 0.25 × 0.125); `patches/meteorite-in-crucible.json` gives it 0.125³ so it can go in. This allows meteoric iron melting and reclamation of iron bits while keeping finished iron ingots, plates and steel blocked. Pig iron remains unimplemented. **Open question:** should refined iron from ore be castable in tool molds, or only ingot molds?
 
 ## 7. Outputs
 

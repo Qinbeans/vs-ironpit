@@ -1,0 +1,8 @@
+[
+  {
+    "op": "add",
+    "path": "/sizeByType",
+    "value": { "*-meteorite-iron": { "width": 0.125, "height": 0.125, "length": 0.125 } },
+    "file": "game:itemtypes/resource/stone.json"
+  }
+]

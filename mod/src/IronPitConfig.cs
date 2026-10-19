@@ -4,6 +4,12 @@ namespace IronPit
     // edit that file to rebalance without recompiling. See DESIGN.md for the reasoning.
     public class IronPitConfig
     {
+        // Bumped when a default changes in a way existing config files should pick up;
+        // IronPitMod.Migrate upgrades older files. Files from before this field existed
+        // read as 0. Do not edit by hand.
+        public const int CurrentVersion = 1;
+        public int ConfigVersion = 0;
+
         // ---- Bellows (DESIGN.md section 3) ----
 
         // Degrees added to the fuel's normal max temperature at full air.
@@ -57,6 +63,11 @@ namespace IronPit
         // What iron ore turns into in the crucible.
         public string IronOutputCode = "game:ingot-iron";
 
+        // Other iron sources that join an iron charge (same thresholds, borax and recovery)
+        // but keep their own metal: an ingredient vanilla would smelt into one of these
+        // produces that item. Meteorite stone smelts to meteoric iron ingots.
+        public string[] IronChargeOwnMetalSmeltsTo = new[] { "game:ingot-meteoriciron" };
+
         // Bellows make the fire pit hot enough to remelt finished iron, steel and meteoric
         // iron in a crucible, which vanilla never allows (and molten iron casts in tool molds).
         // While true, crucibles refuse those except AllowFerrousRemeltItemCodes. Iron ore
@@ -66,9 +77,9 @@ namespace IronPit
         // Metals (the "metal" variant of the smelted output, e.g. ingot-steel) blocked by BlockFerrousRemelt.
         public string[] FerrousMetals = new[] { "iron", "meteoriciron", "steel" };
 
-        // Finished ferrous items that may still melt in the crucible. Meteoritic iron is
-        // useful as a cast metal, while iron bits are reclaimable smithing scrap.
-        public string[] AllowFerrousRemeltItemCodes = new[] { "game:ingot-meteoriciron", "game:metalbit-meteoriciron", "game:metalbit-iron" };
+        // Ferrous items that may still melt in the crucible. Meteoritic iron is useful as a
+        // cast metal (raw meteorite stone included), while iron bits are reclaimable smithing scrap.
+        public string[] AllowFerrousRemeltItemCodes = new[] { "game:stone-meteorite-iron", "game:ingot-meteoriciron", "game:metalbit-meteoriciron", "game:metalbit-iron" };
     }
 
     public class RecoveryTier

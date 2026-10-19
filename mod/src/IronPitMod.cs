@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using HarmonyLib;
 using Newtonsoft.Json;
 using ProtoBuf;
@@ -44,6 +45,7 @@ namespace IronPit
         public override void StartServerSide(ICoreServerAPI sapi)
         {
             LoadConfig(sapi);
+            TransitionStatesSafetyPatch.Api = sapi;
 
             // The fire pit window and block info are drawn on the client, so send it the server's numbers.
             IServerNetworkChannel channel = sapi.Network.GetChannel(ChannelName);
@@ -64,6 +66,7 @@ namespace IronPit
         {
             harmony?.UnpatchAll(HarmonyId);
             harmony = null;
+            TransitionStatesSafetyPatch.Api = null;
             base.Dispose();
         }
 
@@ -72,6 +75,7 @@ namespace IronPit
             try
             {
                 Config = api.LoadModConfig<IronPitConfig>(ConfigFile) ?? new IronPitConfig();
+                Migrate(api, Config);
                 // Write it back so new fields show up in the player's file after an update.
                 api.StoreModConfig(Config, ConfigFile);
             }
@@ -80,6 +84,24 @@ namespace IronPit
                 api.Logger.Error("[IronPit] could not read ModConfig/{0}, using defaults: {1}", ConfigFile, e.Message);
                 Config = new IronPitConfig();
             }
+        }
+
+        // Brings an older config file up to date with defaults added since it was written.
+        // Each step runs once, so a player who later removes the value keeps it removed.
+        static void Migrate(ICoreAPI api, IronPitConfig config)
+        {
+            if (config.ConfigVersion < 1)
+            {
+                // Raw meteorite stone became remeltable (and fits the crucible) in 0.2.3.
+                const string meteoriteStone = "game:stone-meteorite-iron";
+                string[] allowed = config.AllowFerrousRemeltItemCodes ?? Array.Empty<string>();
+                if (!allowed.Contains(meteoriteStone))
+                {
+                    config.AllowFerrousRemeltItemCodes = allowed.Append(meteoriteStone).ToArray();
+                    api.Logger.Notification("[IronPit] config updated: added {0} to AllowFerrousRemeltItemCodes", meteoriteStone);
+                }
+            }
+            config.ConfigVersion = IronPitConfig.CurrentVersion;
         }
     }
 
