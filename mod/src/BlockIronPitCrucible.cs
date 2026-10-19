@@ -160,8 +160,10 @@ namespace IronPit
         {
             if (!Config.BlockFerrousRemelt) return false;
 
+            // Empty cooking slots come back as null entries.
             ItemStack[] ingredients = GetIngredients(world, cookingSlotsProvider);
-            if (ingredients.Length > 0 && ingredients.All(IsAllowedFerrousRemeltIngredient)) return false;
+            ItemStack[] present = ingredients.Where(stack => stack != null).ToArray();
+            if (present.Length > 0 && present.All(IsAllowedFerrousRemeltIngredient)) return false;
 
             ItemStack? output = GetMatchingAlloy(world, ingredients)?.Output?.ResolvedItemstack
                 ?? GetSingleSmeltableStack(ingredients)?.output;
